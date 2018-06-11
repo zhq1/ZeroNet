@@ -10,7 +10,7 @@ class Config(object):
 
     def __init__(self, argv):
         self.version = "0.6.2"
-        self.rev = 3467
+        self.rev = 3477
         self.argv = argv
         self.action = None
         self.config_file = "zeronet.conf"
@@ -38,7 +38,7 @@ class Config(object):
             "udp://tracker.coppersurfer.tk:6969",  # DE
             "udp://tracker.leechers-paradise.org:6969",  # NL
             "udp://104.238.198.186:8000",  # US/LA
-            "http://tracker.skyts.net:6969/announce",  # CN
+            "http://tracker.skyts.cn:6969/announce",  # CN
             "http://open.acgnxtracker.com:80/announce",  # DE
             "http://retracker.mgts.by:80/announce"  # BY
         ]
@@ -204,6 +204,7 @@ class Config(object):
         self.parser.add_argument('--ui_port', help='Web interface bind port', default=43110, type=int, metavar='port')
         self.parser.add_argument('--ui_restrict', help='Restrict web access', default=False, metavar='ip', nargs='*')
         self.parser.add_argument('--ui_host', help='Allow access using this hosts', metavar='host', nargs='*')
+        self.parser.add_argument('--ui_trans_proxy', help='Allow access using a transparent proxy', action='store_true')
 
         self.parser.add_argument('--open_browser', help='Open homepage in web browser automatically',
                                  nargs='?', const="default_browser", metavar='browser_name')

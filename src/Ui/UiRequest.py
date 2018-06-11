@@ -5,6 +5,8 @@ import mimetypes
 import json
 import cgi
 
+import gevent
+
 from Config import config
 from Site import SiteManager
 from User import UserManager
@@ -74,6 +76,9 @@ class UiRequest(object):
         if not self.isHostAllowed(self.env.get("HTTP_HOST")):
             return self.error403("Invalid host: %s" % self.env.get("HTTP_HOST"), details=False)
 
+        # Prepend .bit host for transparent proxy
+        if self.server.site_manager.isDomain(self.env.get("HTTP_HOST")):
+            path = re.sub("^/", "/" + self.env.get("HTTP_HOST") + "/", path)
         path = re.sub("^http://zero[/]+", "/", path)  # Remove begining http://zero/ for chrome extension
         path = re.sub("^http://", "/", path)  # Remove begining http for chrome extension .bit access
 
@@ -141,9 +146,9 @@ class UiRequest(object):
                 else:
                     return self.error404(path)
 
-    # The request is proxied by chrome extension
+    # The request is proxied by chrome extension or a transparent proxy
     def isProxyRequest(self):
-        return self.env["PATH_INFO"].startswith("http://")
+        return self.env["PATH_INFO"].startswith("http://") or (self.server.allow_trans_proxy and self.server.site_manager.isDomain(self.env.get("HTTP_HOST")))
 
     def isWebSocketRequest(self):
         return self.env.get("HTTP_UPGRADE") == "websocket"
@@ -304,6 +309,11 @@ class UiRequest(object):
                     return False
 
             self.sendHeader(extra_headers=extra_headers)
+
+            if time.time() - site.announcer.time_last_announce > 60 * 60:
+                site.log.debug("Site requested, but not announced recently. Updating...")
+                gevent.spawn(site.update, announce=True)
+
             return iter([self.renderWrapper(site, path, inner_path, title, extra_headers)])
             # Make response be sent at once (see https://github.com/HelloZeroNet/ZeroNet/issues/1092)
 
